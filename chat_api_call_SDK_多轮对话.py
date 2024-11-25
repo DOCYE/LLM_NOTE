@@ -1,74 +1,59 @@
+# 无法使用
 import openai
 
-def initialize_openai_client():
-    """
-    初始化 OpenAI 客户端配置
-    """
-    openai.api_key = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJqdGkiOiI0MDIwMjcwMSIsInJvbCI6IlJPTEVfUkVHSVNURVIiLCJpc3MiOiJPcGVuWExhYiIsImlhdCI6MTczMjUxNDk4OSwiY2xpZW50SWQiOiJlYm1ydm9kNnlvMG5semFlazF5cCIsInBob25lIjoiMTU3MTAxOTU4MDEiLCJ1dWlkIjoiOTRhYWFhMWYtNDMyZS00MjliLWFlZDYtZmJlNWY1ZDQyNmM0IiwiZW1haWwiOiIiLCJleHAiOjE3NDgwNjY5ODl9.hFr2wKsUbmOKdAqnARSbV3zetH7curabUs8wa390yt4o-nvawhGvBqUhNaxDq6I_XMM1z4eqDuB5v0j6wdNTig"  # 直接在此处替换为你的实际 token
-    openai.api_base = "https://internlm-chat.intern-ai.org.cn/puyu/api/v1/"  # 替换为你的 base_url
-    # 根据需要设置 api_type 和 api_version，如果不需要可以省略
-    openai.api_type = "custom"  # 如果需要的话
-    openai.api_version = "v1"   # 根据具体 API 需求设置
+# 初始化 OpenAI 客户端
+openai.api_key = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJqdGkiOiI0MDIwMjcwMSIsInJvbCI6IlJPTEVfUkVHSVNURVIiLCJpc3MiOiJPcGVuWExhYiIsImlhdCI6MTczMjUxNDk4OSwiY2xpZW50SWQiOiJlYm1ydm9kNnlvMG5semFlazF5cCIsInBob25lIjoiMTU3MTAxOTU4MDEiLCJ1dWlkIjoiOTRhYWFhMWYtNDMyZS00MjliLWFlZDYtZmJlNWY1ZDQyNmM0IiwiZW1haWwiOiIiLCJleHAiOjE3NDgwNjY5ODl9.hFr2wKsUbmOKdAqnARSbV3zetH7curabUs8wa390yt4o-nvawhGvBqUhNaxDq6I_XMM1z4eqDuB5v0j6wdNTig"  # 替换为你的实际 Token，不带 "Bearer"
+openai.api_base = "https://internlm-chat.intern-ai.org.cn/puyu/api/v1/"
 
-def create_chat_completion(client, messages, model="internlm2.5-latest", temperature=0.8, top_p=0.9):
+# 初始化对话历史
+messages = [
+    {"role": "user", "content": "你好~"}
+]
+
+
+def chat_with_puyu(user_input, messages):
     """
-    创建聊天完成请求
+    与浦语 ChatAPI 进行对话，并更新消息历史。
+
+    Args:
+        user_input (str): 用户输入的内容。
+        messages (list): 当前的消息历史。
+
+    Returns:
+        str: 助理的回复内容。
     """
+    # 添加用户的输入到消息历史
+    messages.append({"role": "user", "content": user_input})
+
     try:
-        response = client.chat.completions.create(
-            model=model,
+        # 调用 API 获取回复
+        response = openai.ChatCompletion.create(
+            model="internlm2.5-latest",
             messages=messages,
-            temperature=temperature,
-            top_p=top_p
+            temperature=0.8,
+            top_p=0.9,
+            n=1
         )
-        return response
+
+        # 获取助理的回复
+        assistant_message = response.choices[0].message['content']
+
+        # 将助理的回复添加到消息历史
+        messages.append({"role": "assistant", "content": assistant_message})
+
+        return assistant_message
+
     except openai.error.OpenAIError as e:
-        print(f"OpenAI API 错误: {e}")
-        return None
-    except Exception as e:
-        print(f"其他错误: {e}")
+        print(f"An error occurred: {e}")
         return None
 
-def main():
-    # 初始化 OpenAI 客户端
-    initialize_openai_client()
-    client = openai
-
-    # 初始化对话历史
-    messages = [
-        {
-            "role": "system",
-            "content": "你是一个友好的助手。"
-        }
-    ]
-
-    print("欢迎使用聊天助手！输入 'exit' 或 'quit' 以结束对话。\n")
-
-    while True:
-        user_input = input("你: ")
-        if user_input.strip().lower() in ['exit', 'quit']:
-            print("结束对话。再见！")
-            break
-
-        # 添加用户消息到对话历史
-        messages.append({
-            "role": "user",
-            "content": user_input
-        })
-
-        # 发送消息并获取回复
-        chat_rsp = create_chat_completion(client, messages)
-
-        if chat_rsp and 'choices' in chat_rsp and len(chat_rsp['choices']) > 0:
-            assistant_reply = chat_rsp['choices'][0]['message']['content']
-            print(f"助手: {assistant_reply}")
-            # 将助手的回复添加到对话历史
-            messages.append({
-                "role": "assistant",
-                "content": assistant_reply
-            })
-        else:
-            print("未能获得有效的回复，请稍后重试。")
 
 if __name__ == "__main__":
-    main()
+    while True:
+        user_input = input("你: ")
+        if user_input.lower() in ["退出", "exit", "quit"]:
+            print("结束对话。")
+            break
+        reply = chat_with_puyu(user_input, messages)
+        if reply:
+            print(f"助理: {reply}")
