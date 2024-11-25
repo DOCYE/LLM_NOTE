@@ -1,32 +1,21 @@
-
 import openai
-import os
-
-def get_api_token():
-    """
-    从环境变量中读取 API Token
-    """
-    api_token = os.getenv('PUYU_API_TOKEN')
-    if not api_token:
-        raise ValueError("请在环境变量中设置 PUYU_API_TOKEN")
-    return api_token
 
 def initialize_openai_client():
     """
     初始化 OpenAI 客户端配置
     """
-    api_token = get_api_token()
-    openai.api_key = api_token
+    openai.api_key = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJqdGkiOiI0MDIwMjcwMSIsInJvbCI6IlJPTEVfUkVHSVNURVIiLCJpc3MiOiJPcGVuWExhYiIsImlhdCI6MTczMjUxNDk4OSwiY2xpZW50SWQiOiJlYm1ydm9kNnlvMG5semFlazF5cCIsInBob25lIjoiMTU3MTAxOTU4MDEiLCJ1dWlkIjoiOTRhYWFhMWYtNDMyZS00MjliLWFlZDYtZmJlNWY1ZDQyNmM0IiwiZW1haWwiOiIiLCJleHAiOjE3NDgwNjY5ODl9.hFr2wKsUbmOKdAqnARSbV3zetH7curabUs8wa390yt4o-nvawhGvBqUhNaxDq6I_XMM1z4eqDuB5v0j6wdNTig"  # 直接在此处替换为你的实际 token
     openai.api_base = "https://internlm-chat.intern-ai.org.cn/puyu/api/v1/"  # 替换为你的 base_url
-    openai.api_type = "custom"  # 根据具体 API 需要设置
-    openai.api_version = "v1"  # 根据具体 API 需要设置
+    # 根据需要设置 api_type 和 api_version，如果不需要可以省略
+    openai.api_type = "custom"  # 如果需要的话
+    openai.api_version = "v1"   # 根据具体 API 需求设置
 
-def create_chat_completion(messages, model="internlm2.5-latest", temperature=0.8, top_p=0.9):
+def create_chat_completion(client, messages, model="internlm2.5-latest", temperature=0.8, top_p=0.9):
     """
     创建聊天完成请求
     """
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
@@ -43,6 +32,7 @@ def create_chat_completion(messages, model="internlm2.5-latest", temperature=0.8
 def main():
     # 初始化 OpenAI 客户端
     initialize_openai_client()
+    client = openai
 
     # 初始化对话历史
     messages = [
@@ -67,7 +57,7 @@ def main():
         })
 
         # 发送消息并获取回复
-        chat_rsp = create_chat_completion(messages)
+        chat_rsp = create_chat_completion(client, messages)
 
         if chat_rsp and 'choices' in chat_rsp and len(chat_rsp['choices']) > 0:
             assistant_reply = chat_rsp['choices'][0]['message']['content']
